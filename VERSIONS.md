@@ -1,6 +1,6 @@
 # Versions
 
-## v1.7.8 (03-23-2026)
+## v1.7.8 (03-24-2026)
 - Adjusted MeshMapper coverage rendering to match the native MeshMapper look more closely by removing visible square borders and increasing fill density.
 - Legacy coverage rendering is unchanged; the visual change applies only to MeshMapper `grid_squares`.
 - Added a MeshMapper coverage legend in the HUD that appears only while the Coverage layer is active, using the native MeshMapper categories: `BIDIR`, `DISC / TRACE`, `TX`, `RX`, `DEAD`, and `DROP`.
