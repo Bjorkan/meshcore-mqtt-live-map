@@ -1,7 +1,7 @@
 # Versions
 
 ## v1.7.8.1 (03-24-2026)
-- Fixed the Peers tool `Clear peers` action so it removes both incoming and outgoing lines even when the same peer appears in both directions.
+- Fixed issue #38: the Peers tool `Clear peers` action now removes both incoming and outgoing lines even when the same peer appears in both directions.
 
 ## v1.7.8 (03-24-2026)
 - Adjusted MeshMapper coverage rendering to match the native MeshMapper look more closely by removing visible square borders and increasing fill density.
