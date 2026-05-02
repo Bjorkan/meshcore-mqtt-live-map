@@ -1,13 +1,13 @@
 # Mesh Map Live: Implementation Notes
 
 This document captures the state of the project and the key changes made so far, so a new Codex session can pick up without losing context.
-Current version: `1.8.5` (see `VERSIONS.md`).
+Current version: `1.8.6` (see `VERSIONS.md`).
 
 ## Overview
 This project renders live MeshCore traffic on a Leaflet + OpenStreetMap map. A FastAPI backend subscribes to MQTT (WSS/TLS or TCP), decodes MeshCore packets using the official [`@michaelhart/meshcore-decoder`](https://www.npmjs.com/package/@michaelhart/meshcore-decoder), and broadcasts device updates and routes over WebSockets to the frontend. Core logic is split into config/state/decoder/LOS/history modules so changes are localized. The UI includes heatmap, LOS tools, map mode toggles, and a 24-hour route history layer.
 
 ## Versioning
-- `VERSION.txt` holds the current version string (`1.8.5`).
+- `VERSION.txt` holds the current version string (`1.8.6`).
 - `VERSIONS.md` is an append-only changelog by version.
 
 ## Key Paths
@@ -61,6 +61,7 @@ This project renders live MeshCore traffic on a Leaflet + OpenStreetMap map. A F
 - `ROUTE_MAX_HOP_DISTANCE` prunes hops longer than the configured km distance.
 - `ROUTE_INFRA_ONLY` limits route lines to repeaters/rooms (companions excluded from routes).
 - `ROUTE_ALLOW_AMBIGUOUS_ONE_BYTE_FALLBACK` restores the legacy route fallback for colliding 1-byte prefixes when conservative routing is too strict; default is `false`.
+- The HUD `Path bytes` filter can limit live route rendering to `All`, `1-byte`, `2-byte`, or `3-byte` path hashes without affecting ingest; the selected view can be shared with `route_bytes=all|1b|2b|3b` and otherwise resets to `All` on reload.
 - `DEVICE_TTL_HOURS` controls advert/device staleness (default `96` hours).
 - `PATH_TTL_SECONDS` controls path staleness (default `172800` seconds / 48h).
 - `DEVICE_COORDS_FILE` points to optional coordinate overrides (`/data/device_coords.json` by default).
@@ -116,6 +117,7 @@ This project renders live MeshCore traffic on a Leaflet + OpenStreetMap map. A F
 - Radius filter: `MAP_RADIUS_KM=0` disables filtering; `.env.example` uses `241.4` km (150mi). `MAP_RADIUS_SHOW=true` draws a debug circle.
 - Default base layer can be set with `MAP_DEFAULT_LAYER` (localStorage overrides).
 - Units toggle (km/mi) is site-wide; default from `DISTANCE_UNITS` and stored in localStorage.
+- Heat toggle defaults from `HEAT_DEFAULT_ON` on first load before any browser-local override exists.
 - Node size slider defaults from `NODE_MARKER_RADIUS` and persists in localStorage.
 - History link size slider defaults from `HISTORY_LINK_SCALE` and persists in localStorage.
 - Node search (name or key) and a labels toggle (persisted to localStorage).
@@ -158,7 +160,7 @@ This project renders live MeshCore traffic on a Leaflet + OpenStreetMap map. A F
 - Optional custom HUD link appears when `CUSTOM_LINK_URL` is set.
 - Update banner shows when `GIT_CHECK_ENABLED=true` and the repo is behind; users can dismiss it per remote SHA.
 - Update banner dismissal relies on `.hud-update[hidden]` to ensure the banner actually disappears.
-- URL params override stored settings: `lat`, `lon`/`lng`/`long`, `zoom`, `layer`, `history`, `heat`, `coverage`, `weather`, `weather_radar`, `weather_wind`, `labels`, `nodes`, `legend`, `menu`, `units`, `history_filter`.
+- URL params override stored settings: `lat`, `lon`/`lng`/`long`, `zoom`, `layer`, `history`, `heat`, `coverage`, `weather`, `weather_radar`, `weather_wind`, `labels`, `nodes`, `legend`, `menu`, `units`, `history_filter`, `route_bytes`.
 - Service worker uses `no-store` for navigation requests so env-driven UI toggles (like the radius ring) update without clearing site data.
 - HUD scrollbars are custom styled in Chromium for a cleaner look.
 
@@ -248,6 +250,7 @@ If routes aren’t visible:
 - Dev-only route debugging: clicking a route line logs hop-by-hop metadata (distances, hashes, origin/receiver) to the browser console when `PROD_MODE=false` (PR #14, credit: https://github.com/sefator).
 - Trails can be disabled by setting `TRAIL_LEN=0` (HUD trail text is removed).
 - Node marker size can be tuned via `NODE_MARKER_RADIUS` (users can override locally).
+- Heat visibility can default on or off via `HEAT_DEFAULT_ON` before local browser state takes over.
 - Units toggle defaults from `DISTANCE_UNITS` and persists in localStorage.
 - Mobile LOS selection supports long-press on nodes.
 - History tool visibility no longer persists (always off unless `history=on` in the URL).

@@ -1,5 +1,12 @@
 # Versions
 
+## v1.8.6 (05-02-2026)
+- Added issue #59: a new `Path bytes` HUD filter for live routes so the map can switch between `All`, `1-byte`, `2-byte`, and `3-byte` path-hash views without changing ingest or decode behavior.
+- The new route-byte filter applies to route lines, hop markers, Route Details, and the HUD route count so the visible map stays consistent while filtering.
+- Mixed-width paths remain visible in the matching byte view whenever a route contains at least one hop of that width, which keeps upgraded mixed meshes usable during rollout.
+- The selected route-byte filter can be shared with `route_bytes=all|1b|2b|3b`, but it resets to `All` on normal reloads so stale browser state does not hide routes unexpectedly.
+- Added `HEAT_DEFAULT_ON` so deployments can choose whether the Heat layer loads on or off by default before any browser-local overrides exist.
+
 ## v1.8.5 (04-30-2026)
 - Added a DockerHub publish workflow at `.github/workflows/docker-publish.yml` that builds the app from `backend/Dockerfile` and pushes multi-arch `linux/amd64` and `linux/arm64` images.
 - The publish flow targets `yellowcooln/meshcore-mqtt-live-map` and tags `latest` from `main`, plus branch, tag, and short-SHA image tags.

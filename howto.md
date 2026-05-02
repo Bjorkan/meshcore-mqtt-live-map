@@ -1,7 +1,11 @@
 # How-To: MQTT Broker + Live Map
 
 This guide covers two parts: stand up a MeshCore MQTT broker and point the live map at it.
-Current version: `1.8.5` (see `VERSIONS.md`).
+Current version: `1.8.6` (see `VERSIONS.md`).
+
+Useful UI defaults in the live map `.env`:
+- `HEAT_DEFAULT_ON=true|false` sets the default Heat toggle state for first load.
+- `NODE_MARKER_RADIUS=<pixels>` sets the default node marker size before browser overrides.
 
 ## 1) MQTT broker (meshcore-mqtt-broker)
 
