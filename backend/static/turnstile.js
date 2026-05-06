@@ -3,6 +3,19 @@
  * Manages widget initialization, verification, and token submission
  */
 
+function meshmapPublicPathPrefix() {
+  const body = document.body;
+  if (!body || !body.dataset) return '';
+  return String(body.dataset.appBasePath || '').trim();
+}
+
+function meshmapApiPath(p) {
+  const prefix = meshmapPublicPathPrefix();
+  const path = p.startsWith('/') ? p : `/${p}`;
+  if (!prefix) return path;
+  return `${prefix}${path}`;
+}
+
 const TurnstileAuth = {
   config: {
     siteKey: new URLSearchParams(window.location.search).get('siteKey') || 
@@ -166,7 +179,7 @@ const TurnstileAuth = {
     this.log(4, 'Submitting token to server...');
 
     try {
-      const response = await fetch('/api/verify-turnstile', {
+      const response = await fetch(meshmapApiPath('/api/verify-turnstile'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -188,7 +201,12 @@ const TurnstileAuth = {
         const d = new Date();
         d.setTime(d.getTime() + (expiresIn * 1000));
         const expires = d.toUTCString();
-        document.cookie = `meshmap_auth=${data.auth_token}; expires=${expires}; path=/; SameSite=Lax`;
+        const cookiePath = meshmapPublicPathPrefix()
+          ? `${meshmapPublicPathPrefix()}/`
+          : '/';
+        document.cookie = (
+          `meshmap_auth=${data.auth_token}; expires=${expires}; path=${cookiePath}; SameSite=Lax`
+        );
         
         this.log(4, `Cookie set: meshmap_auth`);
         
@@ -198,7 +216,7 @@ const TurnstileAuth = {
 
         // Redirect to map after a short delay
         setTimeout(() => {
-          window.location.href = '/map';
+          window.location.href = meshmapApiPath('/map');
         }, 1500);
 
       } else {

@@ -22,7 +22,13 @@ from fastapi import (
 )
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
-from urllib.parse import urlencode, parse_qsl, urlsplit, urlunsplit
+from urllib.parse import (
+  urlencode,
+  parse_qsl,
+  urlsplit,
+  urlunsplit,
+  urlparse,
+)
 from io import BytesIO
 from PIL import Image, ImageDraw
 import math
@@ -190,6 +196,8 @@ from config import (
   APP_VERSION,
   APP_DIR,
   NODE_SCRIPT_PATH,
+  APP_BASE_PATH,
+  public_app_path,
 )
 from state import (
   DeviceState,
@@ -230,6 +238,49 @@ from state import (
 # =========================
 # App / State
 # =========================
+def _public_if_root_relative(url: str) -> str:
+  u = (url or "").strip()
+  if u.startswith("/") and not u.startswith("//"):
+    return public_app_path(u)
+  return u
+
+
+def _session_cookie_path() -> str:
+  return APP_BASE_PATH if APP_BASE_PATH else "/"
+
+
+def _http_site_origin(request: Request) -> str:
+  """Scheme + host for absolute public URLs (OG previews, embeds)."""
+  su = (SITE_URL or "").strip()
+  if su.startswith("http"):
+    parsed = urlparse(su)
+    if parsed.netloc:
+      return f"{parsed.scheme}://{parsed.netloc}"
+  scheme = request.url.scheme
+  host = request.headers.get("host", request.url.hostname or "localhost")
+  return f"{scheme}://{host}"
+
+
+def _public_preview_png_url(request: Request, query: str) -> str:
+  """Absolute URL for preview.png including APP_BASE_PATH."""
+  path = public_app_path("/preview.png")
+  return f"{_http_site_origin(request)}{path}?{query}"
+
+
+def _client_los_proxy_url() -> str:
+  p = (LOS_ELEVATION_PROXY_URL or "").strip()
+  if p.startswith("/") and not p.startswith("//"):
+    return public_app_path(p)
+  return p
+
+
+def _client_weather_radar_lookup_url() -> str:
+  p = (WEATHER_RADAR_COUNTRY_LOOKUP_URL or "").strip()
+  if p.startswith("/") and not p.startswith("//"):
+    return public_app_path(p)
+  return p
+
+
 mqtt_client: Optional[mqtt.Client] = None
 background_tasks: Set[asyncio.Task[Any]] = set()
 clients: Set[WebSocket] = set()
@@ -2636,7 +2687,9 @@ def root(request: Request):
     replacements = {
       "SITE_TITLE": SITE_TITLE,
       "SITE_DESCRIPTION": SITE_DESCRIPTION,
-      "SITE_ICON": SITE_ICON,
+      "SITE_ICON": _public_if_root_relative(SITE_ICON),
+      "APP_BASE_PATH": APP_BASE_PATH,
+      "STATIC_BASE": public_app_path("/static"),
       "TURNSTILE_SITE_KEY": TURNSTILE_SITE_KEY,
       "ASSET_VERSION": ASSET_VERSION,
     }
@@ -2675,9 +2728,8 @@ def root(request: Request):
       zoom = int(zoom_param) if zoom_param and zoom_param.isdigit() else 13
       zoom = max(1, min(18, zoom))  # Clamp zoom between 1-18
 
-      # Generate preview image URL pointing to our own server
-      # Use absolute URL for better compatibility with Discord and other platforms
-      base_url = str(request.url).split("?")[0].rstrip("/")
+      # Generate preview image URL pointing to our own server (must include
+      # APP_BASE_PATH when the map is not served at the site root).
       preview_params = urlencode(
         {
           "lat": lat,
@@ -2687,17 +2739,7 @@ def root(request: Request):
           "theme": "dark",
         }
       )
-      preview_url = f"{base_url}/preview.png?{preview_params}"
-
-      # Ensure absolute URL (use SITE_URL if available, otherwise construct from request)
-      if SITE_URL and SITE_URL.startswith("http"):
-        site_base = SITE_URL.rstrip("/")
-        preview_url = f"{site_base}/preview.png?{preview_params}"
-      elif not preview_url.startswith("http"):
-        # Fallback: construct from request
-        scheme = request.url.scheme
-        host = request.headers.get("host", request.url.hostname or "localhost")
-        preview_url = f"{scheme}://{host}/preview.png?{preview_params}"
+      preview_url = _public_preview_png_url(request, preview_params)
 
       safe_image = html.escape(preview_url, quote=True)
       # Add image dimensions for better Discord/social media compatibility
@@ -2716,9 +2758,11 @@ def root(request: Request):
         safe_static_image = html.escape(str(SITE_OG_IMAGE), quote=True)
         og_image_tag += f'\n  <meta property="og:image:secure_url" content="{safe_static_image}" />'
 
-      # Update og:url to include query parameters
-      base_url = str(request.url).split("?")[0]
-      og_url = f"{base_url}?lat={lat}&lon={lon}"
+      # Update og:url to include query parameters (same path prefix as map).
+      base_page = (
+        _http_site_origin(request) + public_app_path("/").rstrip("/")
+      )
+      og_url = f"{base_page}?lat={lat}&lon={lon}"
       if zoom_param:
         og_url += f"&zoom={zoom}"
     except (ValueError, TypeError):
@@ -2754,7 +2798,13 @@ def root(request: Request):
     "SITE_URL":
       SAFE_OG_URL,
     "SITE_ICON":
-      SITE_ICON,
+      _public_if_root_relative(SITE_ICON),
+    "APP_BASE_PATH":
+      APP_BASE_PATH,
+    "MANIFEST_HREF":
+      public_app_path("/manifest.webmanifest"),
+    "STATIC_BASE":
+      public_app_path("/static"),
     "SITE_FEED_NOTE":
       SITE_FEED_NOTE,
     "CUSTOM_LINK_URL":
@@ -2802,7 +2852,7 @@ def root(request: Request):
     "LOS_ELEVATION_URL":
       LOS_ELEVATION_URL,
     "LOS_ELEVATION_PROXY_URL":
-      LOS_ELEVATION_PROXY_URL,
+      _client_los_proxy_url(),
     "LOS_SAMPLE_MIN":
       LOS_SAMPLE_MIN,
     "LOS_SAMPLE_MAX":
@@ -2830,7 +2880,7 @@ def root(request: Request):
     "WEATHER_RADAR_COUNTRY_BOUNDS_ENABLED":
       str(WEATHER_RADAR_COUNTRY_BOUNDS_ENABLED).lower(),
     "WEATHER_RADAR_COUNTRY_LOOKUP_URL":
-      WEATHER_RADAR_COUNTRY_LOOKUP_URL,
+      _client_weather_radar_lookup_url(),
     "WEATHER_WIND_ENABLED":
       str(WEATHER_WIND_ENABLED).lower(),
     "WEATHER_WIND_API_URL":
@@ -3163,8 +3213,9 @@ def map_page(request: Request):
   # If Turnstile is enabled and user isn't authenticated, redirect to landing
   if TURNSTILE_ENABLED and not _check_turnstile_auth(request):
     print("[map] Unauthenticated user accessing /map, redirecting to /")
+    home = html.escape(public_app_path("/"), quote=True)
     return HTMLResponse(
-      "<script>window.location.href = '/';</script>",
+      f"<script>window.location.href = '{home}';</script>",
       status_code=303,
     )
 
@@ -3200,7 +3251,10 @@ def map_page(request: Request):
     "SITE_TITLE": SITE_TITLE,
     "SITE_DESCRIPTION": SITE_DESCRIPTION,
     "SITE_URL": SAFE_OG_URL,
-    "SITE_ICON": SITE_ICON,
+    "SITE_ICON": _public_if_root_relative(SITE_ICON),
+    "APP_BASE_PATH": APP_BASE_PATH,
+    "MANIFEST_HREF": public_app_path("/manifest.webmanifest"),
+    "STATIC_BASE": public_app_path("/static"),
     "SITE_FEED_NOTE": SITE_FEED_NOTE,
     "CUSTOM_LINK_URL": CUSTOM_LINK_URL,
     "PACKET_ANALYZER_URL": PACKET_ANALYZER_URL,
@@ -3224,7 +3278,7 @@ def map_page(request: Request):
     "MAP_BOUNDARY_NAME": get_map_boundary_name(),
     "MAP_DEFAULT_LAYER": MAP_DEFAULT_LAYER,
     "LOS_ELEVATION_URL": LOS_ELEVATION_URL,
-    "LOS_ELEVATION_PROXY_URL": LOS_ELEVATION_PROXY_URL,
+    "LOS_ELEVATION_PROXY_URL": _client_los_proxy_url(),
     "LOS_SAMPLE_MIN": LOS_SAMPLE_MIN,
     "LOS_SAMPLE_MAX": LOS_SAMPLE_MAX,
     "LOS_SAMPLE_STEP_METERS": LOS_SAMPLE_STEP_METERS,
@@ -3238,7 +3292,7 @@ def map_page(request: Request):
     "COVERAGE_API_URL": COVERAGE_API_URL,
     "WEATHER_RADAR_ENABLED": str(WEATHER_RADAR_ENABLED).lower(),
     "WEATHER_RADAR_COUNTRY_BOUNDS_ENABLED": str(WEATHER_RADAR_COUNTRY_BOUNDS_ENABLED).lower(),
-    "WEATHER_RADAR_COUNTRY_LOOKUP_URL": WEATHER_RADAR_COUNTRY_LOOKUP_URL,
+    "WEATHER_RADAR_COUNTRY_LOOKUP_URL": _client_weather_radar_lookup_url(),
     "WEATHER_WIND_ENABLED": str(WEATHER_WIND_ENABLED).lower(),
     "WEATHER_WIND_API_URL": WEATHER_WIND_API_URL,
     "WEATHER_WIND_GRID_SIZE": WEATHER_WIND_GRID_SIZE,
@@ -3260,29 +3314,34 @@ def map_page(request: Request):
 @app.get("/manifest.webmanifest")
 def manifest():
   icons = []
-  if SITE_ICON:
+  icon_href = _public_if_root_relative(SITE_ICON)
+  if icon_href:
     icons = [
       {
-        "src": SITE_ICON,
+        "src": icon_href,
         "sizes": "192x192",
         "type": "image/png",
         "purpose": "any",
       },
       {
-        "src": SITE_ICON,
+        "src": icon_href,
         "sizes": "512x512",
         "type": "image/png",
         "purpose": "any maskable",
       },
     ]
   short_name = SITE_TITLE if len(SITE_TITLE) <= 12 else SITE_TITLE[:12]
+  start_url = public_app_path("/")
+  if not start_url.endswith("/"):
+    start_url += "/"
+  scope = start_url
   return JSONResponse(
     {
       "name": SITE_TITLE,
       "short_name": short_name,
       "description": SITE_DESCRIPTION,
-      "start_url": "/",
-      "scope": "/",
+      "start_url": start_url,
+      "scope": scope,
       "display": "standalone",
       "display_override": ["standalone", "minimal-ui"],
       "background_color": "#0f172a",
@@ -3341,7 +3400,21 @@ def qr_code(
 
 @app.get("/sw.js")
 def service_worker():
-  return FileResponse("static/sw.js", media_type="application/javascript")
+  sw_path = os.path.join(APP_DIR, "static", "sw.js")
+  try:
+    with open(sw_path, "r", encoding="utf-8") as handle:
+      body = handle.read()
+  except Exception:
+    return FileResponse("static/sw.js", media_type="application/javascript")
+  body = body.replace(
+    "const MESHMAP_APP_BASE = __MESHMAP_APP_BASE__;\n",
+    f"const MESHMAP_APP_BASE = {json.dumps(APP_BASE_PATH)};\n",
+  )
+  return Response(
+    content=body,
+    media_type="application/javascript",
+    headers={"Cache-Control": "no-store"},
+  )
 
 
 @app.get("/snapshot")
@@ -3487,6 +3560,7 @@ def get_peers(device_id: str, request: Request, limit: Optional[int] = Query(Non
   if state and not _coords_are_zero(state.lat, state.lon):
     payload["lat"] = float(state.lat)
     payload["lon"] = float(state.lon)
+    _add_peer_distances(payload, float(state.lat), float(state.lon))
   payload["name"] = (
     (state.name if state else None) or device_names.get(device_id) or ""
   )
@@ -3496,6 +3570,34 @@ def get_peers(device_id: str, request: Request, limit: Optional[int] = Query(Non
                                             ) or (state.ts if state else None)
   payload["server_time"] = time.time()
   return payload
+
+
+def _add_peer_distances(
+  payload: Dict[str, Any], origin_lat: float, origin_lon: float
+) -> None:
+  if _coords_are_zero(origin_lat, origin_lon):
+    return
+  for key in ("incoming", "outgoing"):
+    peers = payload.get(key)
+    if not isinstance(peers, list):
+      continue
+    for peer in peers:
+      if not isinstance(peer, dict):
+        continue
+      lat = peer.get("lat")
+      lon = peer.get("lon")
+      if lat is None or lon is None:
+        continue
+      try:
+        peer_lat = float(lat)
+        peer_lon = float(lon)
+      except (TypeError, ValueError):
+        continue
+      if _coords_are_zero(peer_lat, peer_lon):
+        continue
+      peer["distance_m"] = round(
+        _haversine_m(origin_lat, origin_lon, peer_lat, peer_lon), 2
+      )
 
 
 def _peer_device_payload(
@@ -3858,7 +3960,7 @@ async def verify_turnstile(request: Request):
       key="meshmap_auth",
       value=auth_token,
       max_age=TURNSTILE_TOKEN_TTL_SECONDS,
-      path="/",
+      path=_session_cookie_path(),
       samesite="lax",
     )
 
@@ -3916,3 +4018,34 @@ async def ws_endpoint(ws: WebSocket):
     pass
   finally:
     clients.discard(ws)
+
+
+if APP_BASE_PATH:
+  _meshmap_fastapi_app = app
+
+  class _AppBasePathStripMiddleware:
+    """Strip APP_BASE_PATH from ASGI scope so routes stay root-relative."""
+
+    def __init__(self, inner_app, prefix: str):
+      self.inner_app = inner_app
+      self.prefix = prefix
+
+    async def __call__(self, scope, receive, send):
+      if scope["type"] in ("http", "websocket"):
+        path = scope.get("path") or ""
+        pfx = self.prefix
+        if path == pfx or path.startswith(pfx + "/"):
+          scope = dict(scope)
+          new_path = path[len(pfx):] or "/"
+          scope["path"] = new_path
+          raw = scope.get("raw_path")
+          if isinstance(raw, (bytes, bytearray)):
+            try:
+              scope["raw_path"] = new_path.encode("utf-8")
+            except Exception:
+              pass
+          prev = scope.get("root_path") or ""
+          scope["root_path"] = prev + pfx
+      await self.inner_app(scope, receive, send)
+
+  app = _AppBasePathStripMiddleware(_meshmap_fastapi_app, APP_BASE_PATH)

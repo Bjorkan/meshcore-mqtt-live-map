@@ -143,6 +143,30 @@ ROUTE_HISTORY_ALLOWED_MODES_SET = {
   for s in ROUTE_HISTORY_ALLOWED_MODES.split(",") if s.strip()
 }
 
+
+def _normalize_app_base_path(raw: str) -> str:
+  """Return '' or '/livemap' (leading slash, no trailing slash)."""
+  s = (raw or "").strip()
+  if not s or s == "/":
+    return ""
+  if not s.startswith("/"):
+    s = "/" + s
+  s = s.rstrip("/")
+  return s
+
+
+APP_BASE_PATH = _normalize_app_base_path(os.getenv("APP_BASE_PATH", ""))
+
+
+def public_app_path(path: str) -> str:
+  """Prefix root-relative paths when APP_BASE_PATH is set."""
+  if not path.startswith("/"):
+    path = "/" + path
+  if not APP_BASE_PATH:
+    return path
+  return APP_BASE_PATH + path
+
+
 SITE_TITLE = os.getenv("SITE_TITLE", "Greater Boston Mesh Live Map")
 SITE_DESCRIPTION = os.getenv(
   "SITE_DESCRIPTION",
