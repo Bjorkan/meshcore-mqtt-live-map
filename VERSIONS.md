@@ -1,13 +1,18 @@
 # Versions
 
+## v1.9.0 (05-06-2026)
+- Added `APP_BASE_PATH` so the live map can be hosted under a subpath such as `/livemap` instead of only at `/`.
+- Subpath hosting now rewrites the app shell, static assets, WebSocket path, service worker registration, manifest URLs, Turnstile verification flow, and auth cookie scope so the frontend continues to work correctly when a path prefix is configured.
+- Fixed preview/OG image URL generation so shared links and social embeds keep working correctly with `APP_BASE_PATH` and public site URLs.
+- Node popups now include a direct map-link action that copies a URL with `node=<public-key>`; loading that link focuses and zooms to the matching node/repeater, with `repeater`, `device`, `device_id`, `public_key`, and `pubkey` accepted as aliases.
+- The Peers tool now includes peer distance in the selected km/mi units when both the selected node and peer have coordinates, and the backend `/peers/{device_id}` payload now exposes that value as `distance_m`.
+
 ## v1.8.6 (05-02-2026)
 - Added issue #59: a new `Path bytes` HUD filter for live routes so the map can switch between `All`, `1-byte`, `2-byte`, and `3-byte` path-hash views without changing ingest or decode behavior.
 - The new route-byte filter applies to route lines, hop markers, Route Details, and the HUD route count so the visible map stays consistent while filtering.
 - Mixed-width paths remain visible in the matching byte view whenever a route contains at least one hop of that width, which keeps upgraded mixed meshes usable during rollout.
 - The selected route-byte filter can be shared with `route_bytes=all|1b|2b|3b`, but it resets to `All` on normal reloads so stale browser state does not hide routes unexpectedly.
 - Added `HEAT_DEFAULT_ON` so deployments can choose whether the Heat layer loads on or off by default before any browser-local overrides exist.
-- Node popups now include a direct map-link action that copies a URL with `node=<public-key>`; loading that link focuses and zooms to the matching node/repeater, with `repeater`, `device`, `device_id`, `public_key`, and `pubkey` accepted as aliases.
-- The Peers tool now includes peer distance in the selected km/mi units when both the selected node and peer have coordinates.
 
 ## v1.8.5 (04-30-2026)
 - Added a DockerHub publish workflow at `.github/workflows/docker-publish.yml` that builds the app from `backend/Dockerfile` and pushes multi-arch `linux/amd64` and `linux/arm64` images.

@@ -1,13 +1,13 @@
 # Mesh Map Live: Implementation Notes
 
 This document captures the state of the project and the key changes made so far, so a new Codex session can pick up without losing context.
-Current version: `1.8.6` (see `VERSIONS.md`).
+Current version: `1.9.0` (see `VERSIONS.md`).
 
 ## Overview
 This project renders live MeshCore traffic on a Leaflet + OpenStreetMap map. A FastAPI backend subscribes to MQTT (WSS/TLS or TCP), decodes MeshCore packets using the official [`@michaelhart/meshcore-decoder`](https://www.npmjs.com/package/@michaelhart/meshcore-decoder), and broadcasts device updates and routes over WebSockets to the frontend. Core logic is split into config/state/decoder/LOS/history modules so changes are localized. The UI includes heatmap, LOS tools, map mode toggles, and a 24-hour route history layer.
 
 ## Versioning
-- `VERSION.txt` holds the current version string (`1.8.6`).
+- `VERSION.txt` holds the current version string (`1.9.0`).
 - `VERSIONS.md` is an append-only changelog by version.
 
 ## Key Paths
@@ -42,6 +42,7 @@ This project renders live MeshCore traffic on a Leaflet + OpenStreetMap map. A F
 
 ## Env Notes (Recent Additions)
 - `CUSTOM_LINK_URL` adds a HUD link button; blank hides it.
+- `APP_BASE_PATH` lets the map live under a public subpath such as `/livemap`; when blank, the app behaves as a normal root-hosted site.
 - `PACKET_ANALYZER_URL` adds an external link on Route Details hashes; set it to a base such as `https://analyzer.letsmesh.net/packets?packet_hash=`.
 - `QR_CODE_BUTTON_ENABLED` shows a `Generate QR Code` button in node popups; it opens a theme-aware MeshCore-compatible contact QR modal and defaults to `false`.
 - `PEERS_DEFAULT_LIMIT` controls the default number of peers returned by `/peers/{device_id}` when no `?limit=` is passed; default `8`.
@@ -157,6 +158,7 @@ This project renders live MeshCore traffic on a Leaflet + OpenStreetMap map. A F
 - Route lines prefer known neighbor pairs (including overrides) before falling back to closest-hop selection.
 - Clicking the HUD logo hides/shows the left panel while tool panels stay open.
 - Share button copies a URL with the current view + toggles (including HUD visibility).
+- Direct node links can target a specific node/repeater with `node`, `repeater`, `device`, `device_id`, `public_key`, or `pubkey` in the URL.
 - Optional custom HUD link appears when `CUSTOM_LINK_URL` is set.
 - Update banner shows when `GIT_CHECK_ENABLED=true` and the repo is behind; users can dismiss it per remote SHA.
 - Update banner dismissal relies on `.hud-update[hidden]` to ensure the banner actually disappears.

@@ -1,6 +1,6 @@
 # Mesh Live Map
 
-Version: `1.8.6` (see [VERSIONS.md](VERSIONS.md))
+Version: `1.9.0` (see [VERSIONS.md](VERSIONS.md))
 
 Live MeshCore traffic map that renders nodes, routes, and activity in real time on a Leaflet map. The backend subscribes to MQTT over WebSockets+TLS or TCP, decodes MeshCore packets with the official [`@michaelhart/meshcore-decoder`](https://www.npmjs.com/package/@michaelhart/meshcore-decoder), and streams updates to the browser via WebSockets.
 
@@ -38,6 +38,7 @@ Other community maps (versions may differ):
 - UI controls: legend toggle, dark map, topo map, units toggle (km/mi), labels toggle, hide nodes, heat toggle
 - Route path-byte filter for `All`, `1-byte`, `2-byte`, or `3-byte` live route views, with matching hop markers and Route Details
 - Share button that copies a URL with current view + settings
+- Optional `APP_BASE_PATH` support for hosting the map under a subpath such as `/livemap`
 - URL parameters to open the map at a specific view (center, zoom, toggles)
 - Node search by name or public key
 - Node popups can copy the full public key from the short key shown under the node name, copy a direct `node=` map link, and optionally expose a MeshCore contact QR modal that shows the node name plus a clickable truncated key
@@ -157,6 +158,7 @@ Site metadata (page title + embeds):
 - `SITE_DESCRIPTION`
 - `SITE_OG_IMAGE` (optional; leave blank to omit embed image)
 - `SITE_URL` (public URL)
+- `APP_BASE_PATH` (optional public subpath such as `/livemap`; leave blank for normal root hosting)
 - `SITE_ICON`
 - `SITE_FEED_NOTE`
 - `CUSTOM_LINK_URL` (optional extra HUD link; hidden when blank)
