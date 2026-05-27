@@ -86,6 +86,11 @@ const queryRouteByteFilter = parseRouteByteFilterParam(
   queryParams.get('routeBytes') ||
   queryParams.get('routebytes')
 );
+const queryPeersActive = parseBoolParam(
+  queryParams.get('peers') ||
+  queryParams.get('peer_tool') ||
+  queryParams.get('peerTool')
+);
 const initialUpdateAvailable = parseBoolParam(config.updateAvailable);
 const initialUpdateLocal = (config.updateLocal || '').trim();
 const initialUpdateRemote = (config.updateRemote || '').trim();
@@ -519,6 +524,8 @@ const peersPanel = document.getElementById('peers-panel');
 const peersPanelCollapse = document.getElementById('peers-panel-collapse');
 const peersStatus = document.getElementById('peers-status');
 const peersMeta = document.getElementById('peers-meta');
+const peersInHeading = document.getElementById('peers-in-heading');
+const peersOutHeading = document.getElementById('peers-out-heading');
 const peersIn = document.getElementById('peers-in');
 const peersOut = document.getElementById('peers-out');
 const peersToggle = document.getElementById('peers-toggle');
@@ -668,6 +675,7 @@ localStorage.setItem('meshmapHistoryToolVersion', historyToolVersion);
 let historyVisible = false;
 let historyPanelHidden = false;
 let weatherPanelHidden = false;
+const peersDefaultOpen = parseBoolParam(config.peersDefaultOpen) === true;
 let peersActive = false;
 let peersSelectedId = null;
 let peersData = null;
@@ -2679,6 +2687,23 @@ function setPeersStatus(text) {
   }
 }
 
+function setPeerHeadings(incomingUnique = 0, outgoingUnique = 0) {
+  const inCount = Number(incomingUnique);
+  const outCount = Number(outgoingUnique);
+  if (peersInHeading) {
+    const count = Number.isFinite(inCount)
+      ? Math.max(0, Math.trunc(inCount))
+      : 0;
+    peersInHeading.innerHTML = `Incoming (heard from) <span>${count} peers</span>`;
+  }
+  if (peersOutHeading) {
+    const count = Number.isFinite(outCount)
+      ? Math.max(0, Math.trunc(outCount))
+      : 0;
+    peersOutHeading.innerHTML = `Outgoing (heard by) <span>${count} peers</span>`;
+  }
+}
+
 function clearPeerLines() {
   peerLines.forEach(line => {
     if (line && peerLayer.hasLayer(line)) {
@@ -2782,7 +2807,10 @@ async function selectPeerNode(deviceId) {
     const name = data.name || (deviceId ? `${deviceId.slice(0, 8)}…` : 'Unknown');
     const inboundTotal = data.incoming_total || 0;
     const outboundTotal = data.outgoing_total || 0;
+    const inboundUnique = data.incoming_unique ?? (data.incoming || []).length;
+    const outboundUnique = data.outgoing_unique ?? (data.outgoing || []).length;
     setPeersStatus(`${name} peers`);
+    setPeerHeadings(inboundUnique, outboundUnique);
     if (peersMeta) {
       peersMeta.textContent = `Incoming ${inboundTotal} • Outgoing ${outboundTotal} • ${data.window_hours || 24}h window`;
     }
@@ -2798,6 +2826,7 @@ async function selectPeerNode(deviceId) {
     if (requestToken !== peersRequestToken) return;
     setPeersStatus('Peer lookup failed.');
     if (peersMeta) peersMeta.textContent = '';
+    setPeerHeadings(0, 0);
     renderPeerList(peersIn, [], 0, 'incoming');
     renderPeerList(peersOut, [], 0, 'outgoing');
     peersData = null;
@@ -2811,6 +2840,7 @@ function clearPeers() {
   peersData = null;
   setPeersStatus('Select a node to view peers.');
   if (peersMeta) peersMeta.textContent = '';
+  setPeerHeadings(0, 0);
   renderPeerList(peersIn, [], 0, 'incoming');
   renderPeerList(peersOut, [], 0, 'outgoing');
   clearPeerLines();
@@ -2827,10 +2857,10 @@ function setPeersActive(active) {
     if (active) {
       setPeersPanelCollapsed(false);
       peersPanel.removeAttribute('hidden');
-      peersPanel.style.display = 'block';
+      peersPanel.style.display = '';
     } else {
       peersPanel.setAttribute('hidden', 'hidden');
-      peersPanel.style.display = 'none';
+      peersPanel.style.display = '';
     }
   }
   if (active && peersData) {
@@ -2839,6 +2869,8 @@ function setPeersActive(active) {
       peersData.incoming || [],
       peersData.outgoing || []
     );
+  } else if (active) {
+    setPeerHeadings(0, 0);
   }
   if (!active) {
     clearPeers();
@@ -7610,7 +7642,9 @@ if (historyLinkSizeInput) {
 }
 
 if (peersToggle) {
-  setPeersActive(false);
+  const initialPeersActive =
+    queryPeersActive !== null ? queryPeersActive : peersDefaultOpen;
+  setPeersActive(initialPeersActive);
   peersToggle.addEventListener('click', () => {
     setPeersActive(!peersActive);
   });

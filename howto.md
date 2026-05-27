@@ -221,6 +221,7 @@ Optional packet analyzer link base (used for Route Details hashes):
 PACKET_ANALYZER_URL=https://analyzer.letsmesh.net/packets?packet_hash=
 QR_CODE_BUTTON_ENABLED=false
 PEERS_DEFAULT_LIMIT=8
+PEERS_DEFAULT_OPEN=false
 MAP_BOUNDARY_MODE=radius
 MAP_BOUNDARY_FILE=/data/map_boundary.json
 MAP_BOUNDARY_SHOW=false

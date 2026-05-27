@@ -10,6 +10,8 @@
 - Added a per-pin LOS height field to the coordinate editor, making it explicit that entered heights are above ground level at the selected pin and not one shared route-wide value.
 - LOS pin editing now works from either workflow: add or drag pins on the map, or select a pin and move it from the coordinate editor while recomputing the affected LOS segments.
 - LOS and Propagation remain separate tools on the same map, which keeps path-obstruction checks and RF-coverage planning independent while still supporting deployment planning side by side.
+- Added issue #72: the Peers panel now places `Clear peers` in the header next to `Minimize`, uses a taller panel with only the incoming/outgoing lists scrolling, and shows unique peer counts directly in the Incoming/Outgoing headings.
+- Added `PEERS_DEFAULT_OPEN=false` so deployments can choose whether the Peers tool opens active on initial page load without forcing that behavior for existing installs.
 
 ## v1.9.1 (05-08-2026)
 - Fixed issue #68: `ROUTE_HISTORY_ENABLED=false` now fully disables Route History instead of only stopping new history recording.

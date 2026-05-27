@@ -967,7 +967,7 @@
       top: 18px;
       right: 18px;
       width: 320px;
-      max-height: 60vh;
+      max-height: 72vh;
       padding: 10px;
       border-radius: 12px;
       background: rgba(15, 23, 42, .78);
@@ -976,13 +976,21 @@
       font-family: ui-sans-serif, system-ui, sans-serif;
       display: none;
       z-index: 885;
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow: hidden;
       box-sizing: border-box;
+      gap: 6px;
     }
 
     .peers-panel.active {
-      display: block;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .peers-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 0 auto;
     }
 
     .route-details-panel {
@@ -1070,17 +1078,33 @@
     .peer-section {
       display: grid;
       gap: 6px;
-      margin-top: 8px;
+      min-height: 0;
     }
 
     .peer-heading {
       opacity: 0.8;
     }
 
+    .peer-heading span {
+      margin-left: 8px;
+      color: #bbf7b7;
+      font-weight: 800;
+      opacity: 1;
+    }
+
+    .peers-lists {
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+      flex: 1 1 auto;
+      min-height: 0;
+      margin-top: 2px;
+    }
+
     .peer-list {
       display: grid;
       gap: 4px;
-      max-height: 22vh;
+      align-content: start;
       overflow-y: auto;
       overflow-x: hidden;
       padding-right: 4px;
@@ -1132,6 +1156,10 @@
         bottom: 12px;
         width: auto;
         max-height: 45vh;
+      }
+
+      .peers-panel {
+        max-height: 63vh;
       }
 
       .route-details-panel {

@@ -44,6 +44,7 @@
   data-distance-units="{{DISTANCE_UNITS}}"
   data-heat-default-on="{{HEAT_DEFAULT_ON}}"
   data-route-history-enabled="{{ROUTE_HISTORY_ENABLED}}"
+  data-peers-default-open="{{PEERS_DEFAULT_OPEN}}"
   data-node-radius="{{NODE_MARKER_RADIUS}}" data-history-link-scale="{{HISTORY_LINK_SCALE}}"
   data-coverage-api-url="{{COVERAGE_API_URL}}" data-custom-link-url="{{CUSTOM_LINK_URL}}"
   data-packet-analyzer-url="{{PACKET_ANALYZER_URL}}"
@@ -262,21 +263,25 @@
   <div class="peers-panel tool-panel" id="peers-panel" hidden>
     <div class="tool-panel-header">
       <div class="small"><strong>Node peers</strong></div>
-      <button class="tool-panel-collapse" id="peers-panel-collapse" type="button"
-        aria-controls="peers-panel" aria-expanded="true">Minimize</button>
+      <div class="peers-header-actions">
+        <button class="tool-panel-collapse" id="peers-clear" type="button">Clear peers</button>
+        <button class="tool-panel-collapse" id="peers-panel-collapse" type="button"
+          aria-controls="peers-panel" aria-expanded="true">Minimize</button>
+      </div>
     </div>
     <div class="small" id="peers-status">Select a node to view peers.</div>
     <div class="small" id="peers-meta"></div>
     <div class="small">Blue lines = incoming. Purple lines = outgoing.</div>
-    <div class="peer-section">
-      <div class="small peer-heading">Incoming (heard from)</div>
-      <div class="peer-list" id="peers-in"></div>
+    <div class="peers-lists">
+      <div class="peer-section">
+        <div class="small peer-heading" id="peers-in-heading">Incoming (heard from)</div>
+        <div class="peer-list" id="peers-in"></div>
+      </div>
+      <div class="peer-section">
+        <div class="small peer-heading" id="peers-out-heading">Outgoing (heard by)</div>
+        <div class="peer-list" id="peers-out"></div>
+      </div>
     </div>
-    <div class="peer-section">
-      <div class="small peer-heading">Outgoing (heard by)</div>
-      <div class="peer-list" id="peers-out"></div>
-    </div>
-    <button class="map-toggle" id="peers-clear" type="button">Clear peers</button>
   </div>
   <div class="route-details-panel tool-panel" id="route-details-panel" hidden>
     <div class="tool-panel-header">

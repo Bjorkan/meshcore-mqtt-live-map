@@ -46,6 +46,7 @@ This project renders live MeshCore traffic on a Leaflet + OpenStreetMap map. A F
 - `PACKET_ANALYZER_URL` adds an external link on Route Details hashes; set it to a base such as `https://analyzer.letsmesh.net/packets?packet_hash=`.
 - `QR_CODE_BUTTON_ENABLED` shows a `Generate QR Code` button in node popups; it opens a theme-aware MeshCore-compatible contact QR modal and defaults to `false`.
 - `PEERS_DEFAULT_LIMIT` controls the default number of peers returned by `/peers/{device_id}` when no `?limit=` is passed; default `8`.
+- `PEERS_DEFAULT_OPEN` controls whether the Peers tool starts active on page load; default `false`.
 - `ROUTE_HISTORY_ENABLED=false` now disables the History tool end-to-end: no History button/panel, no `history=on` activation, and no history payloads in `/snapshot` or the WebSocket snapshot.
 - `ROUTE_HISTORY_ENABLED=false` no longer disables peer counts; the Peers tool keeps its own rolling buckets and continues updating from live routes.
 - `MAP_BOUNDARY_MODE` switches geographic filtering between `radius` and `polygon`; default is `radius`.
@@ -129,6 +130,7 @@ This project renders live MeshCore traffic on a Leaflet + OpenStreetMap map. A F
 - History slider modes: 0 = All, 1 = Blue only, 2 = Yellow only, 3 = Yellow + Red, 4 = Red only.
 - History legend swatch is hidden unless the History tool is active.
 - Peers tool shows incoming/outgoing neighbors for a selected node, with counts and percentages pulled from dedicated rolling peer-history buckets instead of raw route-history segments. When both endpoints have coordinates, it also shows peer distance in the selected km/mi units.
+- The Peers panel headings show total unique incoming/outgoing peer counts even when the visible peer list is limited.
 - Those peer-history buckets continue recording even when Route History is disabled, so turning off the History tool does not blank the Peers panel after the old window ages out.
 - Peer-history buckets are also updated from adjacent route `point_ids` when a hop cannot be rendered as a visible map segment, so peer counts do not drop to zero just because a route endpoint lacked usable coordinates.
 - Peers tool skips nodes listed in `MQTT_ONLINE_FORCE_NAMES` (observer listeners).
