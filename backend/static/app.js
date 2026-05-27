@@ -2683,8 +2683,20 @@ function showRouteDetails(meta) {
 
 function setPeersStatus(text) {
   if (peersStatus) {
+    peersStatus.classList.remove('peers-status-action');
+    peersStatus.removeAttribute('role');
+    peersStatus.removeAttribute('tabindex');
     peersStatus.textContent = text || '';
   }
+}
+
+function setPeersSelectedStatus(name, deviceId) {
+  if (!peersStatus) return;
+  peersStatus.classList.add('peers-status-action');
+  peersStatus.setAttribute('role', 'button');
+  peersStatus.setAttribute('tabindex', '0');
+  peersStatus.textContent = `${name} peers`;
+  peersStatus.dataset.peerDeviceId = deviceId || '';
 }
 
 function setPeerHeadings(incomingUnique = 0, outgoingUnique = 0) {
@@ -2809,7 +2821,7 @@ async function selectPeerNode(deviceId) {
     const outboundTotal = data.outgoing_total || 0;
     const inboundUnique = data.incoming_unique ?? (data.incoming || []).length;
     const outboundUnique = data.outgoing_unique ?? (data.outgoing || []).length;
-    setPeersStatus(`${name} peers`);
+    setPeersSelectedStatus(name, deviceId);
     setPeerHeadings(inboundUnique, outboundUnique);
     if (peersMeta) {
       peersMeta.textContent = `Incoming ${inboundTotal} • Outgoing ${outboundTotal} • ${data.window_hours || 24}h window`;
@@ -7647,6 +7659,20 @@ if (peersToggle) {
   setPeersActive(initialPeersActive);
   peersToggle.addEventListener('click', () => {
     setPeersActive(!peersActive);
+  });
+}
+if (peersStatus) {
+  peersStatus.addEventListener('click', () => {
+    if (peersStatus.dataset.peerDeviceId) {
+      focusDevice(peersStatus.dataset.peerDeviceId);
+    }
+  });
+  peersStatus.addEventListener('keydown', (ev) => {
+    if (!peersStatus.dataset.peerDeviceId) return;
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      focusDevice(peersStatus.dataset.peerDeviceId);
+    }
   });
 }
 if (peersClear) {
