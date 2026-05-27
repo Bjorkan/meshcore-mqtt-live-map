@@ -259,6 +259,7 @@ const polylines = new Map(); // device_id -> Leaflet polyline
 const markerLayer = L.layerGroup().addTo(map);
 const trailLayer = L.layerGroup().addTo(map);
 let nodesVisible = true;
+let mqttOnlyVisible = false;
 const routeLines = new Map(); // route_id -> { line, timeout }
 const routeCache = new Map(); // route_id -> raw route payload
 const deviceMeta = new Map(); // device_id -> { lat, lon, name }
@@ -740,6 +741,7 @@ if (storedHeat === null) {
   localStorage.setItem('meshmapShowHeat', heatDefaultOn ? 'true' : 'false');
 }
 const mqttWindowLabel = document.getElementById('mqtt-online-label');
+const mqttOnlyToggle = document.getElementById('mqtt-only-toggle');
 if (mqttWindowLabel) {
   const mqttWindowSeconds = Math.max(
     mqttOnlineSeconds,
@@ -748,6 +750,16 @@ if (mqttWindowLabel) {
   );
   mqttWindowLabel.textContent = `MQTT online (last ${formatOnlineWindow(mqttWindowSeconds)})`;
 }
+function updateMqttOnlyToggleUi() {
+  if (!mqttOnlyToggle) return;
+  mqttOnlyToggle.classList.toggle('active', mqttOnlyVisible);
+  mqttOnlyToggle.setAttribute('aria-pressed', mqttOnlyVisible ? 'true' : 'false');
+  mqttOnlyToggle.textContent = mqttOnlyVisible ? 'All' : 'Only';
+  mqttOnlyToggle.title = mqttOnlyVisible
+    ? 'Show all nodes'
+    : 'Only show MQTT online nodes';
+}
+updateMqttOnlyToggleUi();
 
 const propagationLayer = L.layerGroup().addTo(map);
 let propagationActive = false;
@@ -2465,10 +2477,14 @@ function routeMatchesByteFilter(meta) {
   return hashes.some((hash) => routeHashByteWidth(hash) === targetWidth);
 }
 
+function routeVisibleForCurrentFilters(meta) {
+  return nodesVisible && !mqttOnlyVisible && routeMatchesByteFilter(meta);
+}
+
 function getVisibleRouteCount() {
   let count = 0;
   routeLines.forEach((entry) => {
-    if (routeMatchesByteFilter(entry && entry.meta)) {
+    if (routeVisibleForCurrentFilters(entry && entry.meta)) {
       count += 1;
     }
   });
@@ -2477,7 +2493,7 @@ function getVisibleRouteCount() {
 
 function syncRouteEntryDisplay(routeId, entry) {
   if (!entry || !entry.line) return;
-  const visible = nodesVisible && routeMatchesByteFilter(entry.meta);
+  const visible = routeVisibleForCurrentFilters(entry.meta);
   const style = routeStyleForDisplay(
     entry.payloadType,
     entry.routeMode,
@@ -2520,7 +2536,7 @@ function syncAllRouteDisplays() {
 
 function renderHopMarkers(routeId, meta) {
   clearHopMarkersForRoute(routeId);
-  if (!hopsVisible || !meta || !meta.points || !routeMatchesByteFilter(meta)) {
+  if (!hopsVisible || !meta || !meta.points || !routeVisibleForCurrentFilters(meta)) {
     return;
   }
 
@@ -2732,12 +2748,20 @@ function renderPeerLines(origin, incoming, outgoing) {
   clearPeerLines();
   if (!peersActive || !nodesVisible) return;
   if (!origin || origin.lat == null || origin.lon == null) return;
+  if (mqttOnlyVisible && peersSelectedId) {
+    const selectedDevice = deviceData.get(peersSelectedId);
+    if (selectedDevice && !devicePassesMqttOnlyFilter(selectedDevice)) return;
+  }
   if (!map.hasLayer(peerLayer)) {
     peerLayer.addTo(map);
   }
   const originLatLng = [origin.lat, origin.lon];
   const drawLine = (peer, color, dash, direction) => {
     if (peer.lat == null || peer.lon == null) return;
+    if (mqttOnlyVisible && peer.peer_id) {
+      const peerDevice = deviceData.get(peer.peer_id);
+      if (peerDevice && !devicePassesMqttOnlyFilter(peerDevice)) return;
+    }
     const line = L.polyline([originLatLng, [peer.lat, peer.lon]], {
       pane: 'peerPane',
       color,
@@ -3017,6 +3041,39 @@ function isMqttOnline(d) {
   const lastSeen = Number(d.mqtt_seen_ts) || 0;
   if (!lastSeen) return false;
   return mqttOnlineSeconds > 0 && (now - lastSeen) <= mqttOnlineSeconds;
+}
+
+function devicePassesMqttOnlyFilter(d) {
+  return !mqttOnlyVisible || isMqttOnline(d);
+}
+
+function shouldShowDeviceOnMap(d) {
+  return Boolean(d) &&
+    nodesVisible &&
+    devicePassesMqttOnlyFilter(d) &&
+    latLngInViewport(d.lat, d.lon);
+}
+
+function setMqttOnlyVisible(visible) {
+  mqttOnlyVisible = Boolean(visible);
+  updateMqttOnlyToggleUi();
+  refreshViewportLayers();
+  routeLines.forEach((entry, routeId) => {
+    syncRouteEntryDisplay(routeId, entry);
+  });
+  if (peersActive && peersData) {
+    const selectedDevice = peersSelectedId ? deviceData.get(peersSelectedId) : null;
+    if (selectedDevice && !devicePassesMqttOnlyFilter(selectedDevice)) {
+      clearPeerLines();
+    } else {
+      renderPeerLines(
+        { lat: peersData.lat, lon: peersData.lon },
+        peersData.incoming || [],
+        peersData.outgoing || []
+      );
+    }
+  }
+  refreshStats();
 }
 
 function updateMarkerLabel(m, d) {
@@ -5719,7 +5776,7 @@ function handleQrPopupClick(ev) {
 function upsertDevice(d, trail) {
   const id = d.device_id;
   const latlng = [d.lat, d.lon];
-  const visibleInViewport = latLngInViewport(d.lat, d.lon);
+  const visibleOnMap = shouldShowDeviceOnMap(d);
   const role = resolveRole(d);
   const style = markerStyleForDevice(d);
   deviceData.set(id, d);
@@ -5844,14 +5901,14 @@ function upsertDevice(d, trail) {
     });
     markers.set(id, m);
     updateMarkerLabel(m, d);
-    syncLayerMembership(markerLayer, m, nodesVisible && visibleInViewport);
+    syncLayerMembership(markerLayer, m, visibleOnMap);
   } else {
     const m = markers.get(id);
     m.setLatLng(latlng);
     m.setPopupContent(makePopup(d));
     if (m.setStyle) m.setStyle(style);
     updateMarkerLabel(m, d);
-    syncLayerMembership(markerLayer, m, nodesVisible && visibleInViewport);
+    syncLayerMembership(markerLayer, m, visibleOnMap);
   }
 
   // trail polyline (skip companions)
@@ -5866,14 +5923,14 @@ function upsertDevice(d, trail) {
         className: 'trail-animated'
       });
       polylines.set(id, pl);
-      syncLayerMembership(trailLayer, pl, nodesVisible && visibleInViewport);
+      syncLayerMembership(trailLayer, pl, visibleOnMap);
     } else {
       const pl = polylines.get(id);
       pl.setLatLngs(points);
       if (pl.setStyle) {
         pl.setStyle({ color: '#38bdf8', weight: 3, opacity: 0.85 });
       }
-      syncLayerMembership(trailLayer, pl, nodesVisible && visibleInViewport);
+      syncLayerMembership(trailLayer, pl, visibleOnMap);
     }
   } else if (polylines.has(id)) {
     trailLayer.removeLayer(polylines.get(id));
@@ -5949,20 +6006,18 @@ function refreshOnlineMarkers() {
     if (m.setStyle) m.setStyle(style);
     if (m.getPopup()) m.setPopupContent(makePopup(d));
   });
+  refreshViewportLayers();
   refreshStats();
 }
 
 function refreshViewportLayers() {
-  const shouldShowNodes = nodesVisible;
   for (const [id, marker] of markers.entries()) {
     const d = deviceData.get(id);
-    const visible = Boolean(d) && shouldShowNodes && latLngInViewport(d.lat, d.lon);
-    syncLayerMembership(markerLayer, marker, visible);
+    syncLayerMembership(markerLayer, marker, shouldShowDeviceOnMap(d));
   }
   for (const [id, line] of polylines.entries()) {
     const d = deviceData.get(id);
-    const visible = Boolean(d) && shouldShowNodes && latLngInViewport(d.lat, d.lon);
-    syncLayerMembership(trailLayer, line, visible);
+    syncLayerMembership(trailLayer, line, shouldShowDeviceOnMap(d));
   }
   if (coverageVisible && coverageData) {
     if (coverageProvider === 'meshmapper' && meshMapperCoverageSource === coverageData && meshMapperCoverageRects.length) {
@@ -7611,6 +7666,11 @@ if (nodesToggle) {
   nodesToggle.addEventListener('click', () => {
     setNodesVisible(!nodesVisible);
     localStorage.setItem('meshmapNodesVisible', nodesVisible ? 'true' : 'false');
+  });
+}
+if (mqttOnlyToggle) {
+  mqttOnlyToggle.addEventListener('click', () => {
+    setMqttOnlyVisible(!mqttOnlyVisible);
   });
 }
 updateNodeSizeUi();

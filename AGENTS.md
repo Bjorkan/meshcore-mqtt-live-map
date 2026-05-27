@@ -111,6 +111,7 @@ Current version: `1.9.2` (see `VERSIONS.md`).
 - MQTT online status is derived from `/status` + `/internal` TTL windows; `/packets` is tracked as feed activity.
 - Devices that remain MQTT-online keep their last known coordinates on the map until MQTT presence expires, even if fresh location packets stop.
 - `MQTT_ONLINE_FORCE_NAMES` (comma-separated device names) forces selected nodes to always appear MQTT online.
+- Legend MQTT-only filter temporarily hides non-MQTT markers, trails, routes, hop markers, route details, and peer lines; it is not persisted and is not included in share links.
 - Service worker fetches navigations with `no-store` to avoid stale UI/env toggles (e.g., radius debug ring).
 - Node search + labels toggle (persisted in localStorage) and a GitHub link in the HUD.
 - Hide-nodes toggle hides markers, trails, heat, routes, and history layers.

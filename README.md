@@ -22,7 +22,7 @@ Other community maps (versions may differ):
 
 ## Features
 - Live node markers with roles (Repeater, Companion, Room Server, Unknown)
-- MQTT online indicator (green outline + popup status) based on MQTT `status`/`internal` topics, with conservative role detection from explicit MQTT role fields only
+- MQTT online indicator (green outline + popup status) based on MQTT `status`/`internal` topics, with a temporary legend-side MQTT-only map filter and conservative role detection from explicit MQTT role fields only
 - Animated route/trace lines
 - Hidden arcade Pacman route visualization mode for live route direction
 - Dev route inspection: click a route line in dev (`PROD_MODE=false`) to log hop-by-hop details in the browser console, including resolved `point_id` / `point_label` data (PR #14, credit: https://github.com/sefator)
@@ -35,7 +35,7 @@ Other community maps (versions may differ):
 - MeshMapper coverage viewport sync reuses cached rectangles instead of recreating every visible square on each pan/zoom, which keeps the coverage layer responsive on larger meshes
 - Weather tool panel with independent Radar and Wind toggles
 - Update available banner (git local vs upstream) with dismiss
-- UI controls: legend toggle, dark map, topo map, units toggle (km/mi), labels toggle, hide nodes, heat toggle
+- UI controls: legend toggle, dark map, topo map, units toggle (km/mi), labels toggle, hide nodes, heat toggle, temporary MQTT-only filter
 - Route path-byte filter for `All`, `1-byte`, `2-byte`, or `3-byte` live route views, with matching hop markers and Route Details
 - Share button that copies a URL with current view + settings
 - Optional `APP_BASE_PATH` support for hosting the map under a subpath such as `/livemap`
@@ -324,6 +324,7 @@ Use it:
   broker visibility.
 - MQTT connectivity (`MQTT online`) is based on `/status` + `/internal`; `/packets` is treated as feed activity and does not by itself mark a node online.
 - If a node is still MQTT-online but has stopped sending fresh location packets, the map keeps its last known position visible until MQTT presence expires.
+- The legend `MQTT online` row includes an `Only` filter that temporarily hides non-MQTT markers, trails, routes, hop markers, route details, and peer lines. This filter is local to the current page view only; it is not saved in browser storage and is not added to share links.
 - Live route IDs are observer-aware (`message_hash:receiver_id`) so the same
   message seen by multiple MQTT observers does not overwrite active lines.
 - Line-of-sight tool: click **LOS tool** and add pins to build a chained path, or **Shift+click** nodes to place LOS pins from existing nodes. You can also add pins directly from the LOS panel with latitude/longitude + pin height inputs. Drag endpoints or click a pin and then click the map to move that specific point, or update its coordinates from the panel. Heights are stored per pin.

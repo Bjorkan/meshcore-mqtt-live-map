@@ -174,6 +174,9 @@ Authentication summary:
 Presence behavior:
 - `/status` + `/internal` determine whether a node is shown as **MQTT online**.
 - `/packets` is tracked as feed activity and does not, by itself, mark a node online.
+- The legend `MQTT online` row has an **Only** button for a temporary
+  MQTT-online-only view. It is not saved to browser storage and is not included
+  in share links.
 
 Optional coordinate overrides (for fixed node placement):
 

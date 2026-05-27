@@ -180,8 +180,11 @@
           <div class="legend-item"><span class="legend-dot legend-los-relay"></span> Relay suggested</div>
         </div>
         <div class="legend-item"><span class="legend-heat"></span> Heat (last 10 min)</div>
-        <div class="legend-item"><span class="legend-dot legend-online"></span><span id="mqtt-online-label">MQTT online
-            (last 5 min)</span></div>
+        <div class="legend-item legend-item-filter"><span class="legend-dot legend-online"></span><span id="mqtt-online-label">MQTT online
+            (last 5 min)</span>
+          <button class="legend-filter-button" id="mqtt-only-toggle" type="button" aria-pressed="false"
+            title="Only show MQTT online nodes">Only</button>
+        </div>
         <div class="legend-item"><span class="legend-dot legend-repeater"></span> Repeater</div>
         <div class="legend-item"><span class="legend-dot legend-companion"></span> Companion</div>
         <div class="legend-item"><span class="legend-dot legend-room"></span> Room server</div>

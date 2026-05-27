@@ -353,6 +353,35 @@
       opacity: 0.9;
     }
 
+    .legend-item-filter {
+      align-items: center;
+    }
+
+    .legend-filter-button {
+      margin-left: auto;
+      padding: 2px 7px;
+      border: 1px solid rgba(255, 255, 255, .24);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .1);
+      color: #fff;
+      font-size: 11px;
+      line-height: 1.3;
+      cursor: pointer;
+      transition: background .2s ease, border-color .2s ease, color .2s ease;
+    }
+
+    .legend-filter-button:hover,
+    .legend-filter-button:focus-visible {
+      background: rgba(255, 255, 255, .2);
+      border-color: rgba(255, 255, 255, .45);
+    }
+
+    .legend-filter-button.active {
+      background: rgba(34, 197, 94, .32);
+      border-color: rgba(34, 197, 94, .7);
+      color: #dcfce7;
+    }
+
     .legend-line {
       width: 30px;
       height: 0;

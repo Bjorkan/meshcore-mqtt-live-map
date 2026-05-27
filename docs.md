@@ -125,6 +125,7 @@ This project renders live MeshCore traffic on a Leaflet + OpenStreetMap map. A F
 - Node size slider defaults from `NODE_MARKER_RADIUS` and persists in localStorage.
 - History link size slider defaults from `HISTORY_LINK_SCALE` and persists in localStorage.
 - Node search (name or key) and a labels toggle (persisted to localStorage).
+- The MQTT legend row has an `Only` button for a temporary MQTT-online-only view; it hides non-MQTT markers, trails, routes, hop markers, route details, and peer lines without persisting to localStorage or share links.
 - History tool defaults off and opens a right-side panel with a heat filter slider (visibility is not persisted).
 - History panel can be dismissed with the X button while keeping history lines visible (toggle History tool to show it again).
 - History slider modes: 0 = All, 1 = Blue only, 2 = Yellow only, 3 = Yellow + Red, 4 = Red only.
