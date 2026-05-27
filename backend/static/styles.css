@@ -1119,7 +1119,8 @@
     }
 
     .peer-section {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 6px;
       min-height: 0;
     }
@@ -1149,7 +1150,7 @@
     }
 
     .peer-section-busy {
-      flex: 1 1 0;
+      flex: 1 1 min(190px, 24vh);
     }
 
     .peer-list {
@@ -1164,7 +1165,8 @@
     }
 
     .peer-section-busy .peer-list {
-      min-height: min(190px, 24vh);
+      flex: 1 1 auto;
+      min-height: 0;
       max-height: none;
     }
 
@@ -1216,7 +1218,7 @@
       }
 
       .peers-panel {
-        max-height: 68vh;
+        max-height: calc(100vh - 24px);
       }
 
       .peer-list {
@@ -1224,7 +1226,8 @@
       }
 
       .peer-section-busy .peer-list {
-        min-height: min(180px, 22vh);
+        flex: 1 1 auto;
+        min-height: 0;
         max-height: none;
       }
 
