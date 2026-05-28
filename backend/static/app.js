@@ -2894,9 +2894,9 @@ function renderPeerList(target, peers, total, label, origin = null) {
     const name = peer.name || (peer.peer_id ? `${peer.peer_id.slice(0, 8)}…` : 'Unknown');
     const percent = total > 0 ? `${peer.percent.toFixed(1)}%` : '0%';
     const distance = formatPeerDistanceUnits(getPeerDistanceMeters(origin, peer));
-    const metaParts = [`<strong>${peer.count}</strong>`, `<strong>${percent}</strong>`];
+    const metaParts = [`${peer.count}`, `${percent}`];
     if (distance) {
-      metaParts.push(`<strong>${distance}</strong>`);
+      metaParts.push(distance);
     }
     const meta = metaParts.join('<span class="peer-stat-separator" aria-hidden="true">•</span>');
     item.innerHTML = `<span class="peer-name">${name}</span><span class="peer-count">${meta}</span>`;

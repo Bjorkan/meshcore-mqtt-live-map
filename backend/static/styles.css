@@ -1020,11 +1020,16 @@
       height: min(82vh, calc(100vh - 36px));
     }
 
+    .peers-panel .tool-panel-header {
+      align-items: flex-start;
+    }
+
     .peers-header-actions {
       display: flex;
       align-items: center;
       gap: 6px;
       flex: 0 0 auto;
+      margin-top: 4px;
     }
 
     .peers-panel-title {
@@ -1249,10 +1254,6 @@
       text-align: right;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
-    }
-
-    .peer-item .peer-count strong {
-      font-weight: 800;
     }
 
     .peer-stat-separator {
